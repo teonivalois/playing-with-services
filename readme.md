@@ -27,7 +27,6 @@ $ docker volume create portainer_data
 $ docker service create \
     --name portainer \
     --network admin \
-    --endpoint-mode dnsrr \
     --replicas=1 \
     --constraint 'node.role == manager' \
     --mount 'type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock' \
@@ -58,7 +57,6 @@ The deployment for kong will happen in three steps:
     $ docker service create \
         --name kong-database \
         --network admin \
-        --endpoint-mode dnsrr \
         --mount 'type=volume,src=kong_data,dst=/data' \
         cassandra:3
     ```
@@ -88,7 +86,6 @@ The deployment for kong will happen in three steps:
         --name kong \
         --network admin \
         --network playground \
-        --endpoint-mode dnsrr \
         -e 'KONG_DATABASE=cassandra' \
         -e 'KONG_CASSANDRA_CONTACT_POINTS=kong-database' \
         -e 'KONG_PROXY_ACCESS_LOG=/dev/stdout' \
@@ -113,7 +110,6 @@ Kong is done, but the community version doesn't come with a UI. So, let's grab a
     $ docker service create \
         --name konga-database \
         --network admin \
-        --endpoint-mode dnsrr \
         --mount 'type=volume,src=konga_data,dst=/data' \
         -e 'POSTGRES_USER=konga' \
         -e 'POSTGRES_DB=konga' \
@@ -130,7 +126,6 @@ Kong is done, but the community version doesn't come with a UI. So, let's grab a
     $ docker service create \
         --name konga \
         --network admin \
-        --endpoint-mode dnsrr \
         -e 'DB_ADAPTER=postgres' \
         -e 'DB_HOST=konga-database' \
         -e 'DB_PORT=5432' \
@@ -200,7 +195,6 @@ IMPORTANT: Remember that from this point onwards we should only use the _playgro
     $ docker service create \
         --name service1 \
         --network playground \
-        --endpoint-mode dnsrr \
         -e 'RabbitMQConnectionString=host=rabbitmq;username=playground;password=letsplay' \
         -e 'ASPNETCORE_ENVIRONMENT=Development' \
         playground/service1
@@ -208,7 +202,6 @@ IMPORTANT: Remember that from this point onwards we should only use the _playgro
     $ docker service create \
         --name service2 \
         --network playground \
-        --endpoint-mode dnsrr \
         -e 'RabbitMQConnectionString=host=rabbitmq;username=playground;password=letsplay' \
         -e 'ASPNETCORE_ENVIRONMENT=Development' \
         playground/service2
