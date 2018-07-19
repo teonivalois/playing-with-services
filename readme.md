@@ -9,6 +9,21 @@ I told him that I'd like:
 - the api's should be exposed via an API Gateway (I did suggest kong for this)
 - Everything using containers
 
+---
+## TL;DR;
+
+To quickly get the environment running, do the following:
+
+```bash
+$ docker swarm init
+$ chmod +x ./scripts/deploy-cloud.sh && ./scripts/deploy-cloud.sh
+$ chmod +x ./scripts/deploy-playground.sh && ./scripts/deploy-playground.sh
+```
+
+and then [verify the cloud environment](#verify_cloud) and [configure the application in the gateway](#verify_playground).
+
+---
+
 ## Preparing the _cloud_ environment locally
 
 For this sample, I'll be using docker in swarm mode. So, let's start by creating our swarm. Along with the swarm, we will also create two networks, one named _admin_ and another network named _playground_.
@@ -160,6 +175,8 @@ $ docker service create \
     --publish 80:80 \
     playground/haproxy
 ```
+
+### <a name="verify_cloud"></a> Verifying the cloud environment
 In my case, I'm using _cloud.local_ pointing to _127.0.0.1_ on my hosts file. So, to have everything working properly on your end as well, let's add the following to the hosts file.
 
 ```
@@ -178,6 +195,8 @@ Great, we can see all of our services, now head to _admin.cloud.local_, and logi
 ![Portainer](./images/konga.png)
 
 To verify _kong_, just go to _http://cloud.local_ and a message like **_{"message":"no route and no API found with those values"}_** should be displayed.
+
+---
 
 ## The Pub/Sub asp.net core application
 
@@ -217,6 +236,7 @@ IMPORTANT: Remember that from this point onwards we should only use the _playgro
         playground/service2
     ```
 
+### <a name="verify_playground"></a> Testing the Pub/Sub application
 Okay, applications deployed, and now what? How to test it?
 1. Go to _admin.cloud.local_, go to services and click _ADD NEW SERVICE_;
 2. Set the service name as _service1_, and fill the URL field with _http://service1/api_, then click the button _SUBMIT SERVICE_;

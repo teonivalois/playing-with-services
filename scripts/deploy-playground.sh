@@ -1,11 +1,13 @@
 #! /bin/bash
+mydir=`dirname "$0"`
+
 # Create playground network and add kong to it
 docker network create -d overlay --attachable playground
 docker service update --network-add playground kong
 
 docker service rm service1 service2
-docker build -f ../service1.dockerfile ../ -t playground/service1
-docker build -f ../service2.dockerfile ../ -t playground/service2
+docker build -f $mydir/../service1.dockerfile $mydir/../ -t playground/service1
+docker build -f $mydir/../service2.dockerfile $mydir/../ -t playground/service2
 
 # Deploy services
 docker service create \

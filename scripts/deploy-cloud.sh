@@ -1,5 +1,5 @@
 #! /bin/bash
-docker volume rm kong_data konga_data portainer_data
+mydir=`dirname "$0"`
 
 # Create Networks
 docker network create -d overlay --attachable admin
@@ -10,7 +10,7 @@ docker volume create kong_data
 docker volume create konga_data
 
 # Build HAProxy custom image
-docker build -f ../haproxy.dockerfile ../ -t mycloud.local/haproxy
+docker build -f $mydir/../haproxy.dockerfile $mydir/../ -t mycloud.local/haproxy
 
 # Deploy Databases
 docker service create \
