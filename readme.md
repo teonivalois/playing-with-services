@@ -50,7 +50,7 @@ The deployment for kong will happen in three steps:
 
 - Kong Database
 
-    Kong can run on top of cassandra or postgresql. I'm using cassandra here...
+    Kong can run on top of cassandra or postgres. I'm using postgres here, so we don't need to fetch another image...
 
     ```bash
     $ docker volume create kong_data
@@ -58,7 +58,11 @@ The deployment for kong will happen in three steps:
         --name kong-database \
         --network admin \
         --mount 'type=volume,src=kong_data,dst=/data' \
-        cassandra:3
+        -e 'POSTGRES_USER=kong' \
+        -e 'POSTGRES_DB=kong' \
+        -e 'POSTGRES_DB=kong' \
+        -e 'PGDATA=/data' \
+        postgres:10
     ```
 
 - Kong Database Migration
@@ -70,8 +74,11 @@ The deployment for kong will happen in three steps:
         --name kong-migrations \
         --network admin \
         --link kong-database:kong-database \
-        -e 'KONG_DATABASE=cassandra' \
-        -e 'KONG_CASSANDRA_CONTACT_POINTS=kong-database' \
+        -e 'KONG_DATABASE=postgres' \
+        -e 'KONG_PG_HOST=kong-database' \
+        -e 'KONG_PG_USER=kong' \
+        -e 'KONG_PG_PASSWORD=kong' \
+        -e 'KONG_PG_DATABASE=kong' \
         kong kong migrations up
     ```
 
@@ -86,8 +93,11 @@ The deployment for kong will happen in three steps:
         --name kong \
         --network admin \
         --network playground \
-        -e 'KONG_DATABASE=cassandra' \
-        -e 'KONG_CASSANDRA_CONTACT_POINTS=kong-database' \
+        -e 'KONG_DATABASE=postgres' \
+        -e 'KONG_PG_HOST=kong-database' \
+        -e 'KONG_PG_USER=kong' \
+        -e 'KONG_PG_PASSWORD=kong' \
+        -e 'KONG_PG_DATABASE=kong' \
         -e 'KONG_PROXY_ACCESS_LOG=/dev/stdout' \
         -e 'KONG_ADMIN_ACCESS_LOG=/dev/stdout' \
         -e 'KONG_PROXY_ERROR_LOG=/dev/stderr' \
@@ -101,7 +111,7 @@ The deployment for kong will happen in three steps:
 
 Kong is done, but the community version doesn't come with a UI. So, let's grab an open-source solution for it. We will use [_konga_](https://pantsel.github.io/konga/).
 
-- Konda Database
+- Konga Database
 
     Konga uses a postgres database to store some credentials and preferences.
 
