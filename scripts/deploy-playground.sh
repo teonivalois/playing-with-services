@@ -30,3 +30,16 @@ docker service create \
     -e 'RabbitMQConnectionString=host=rabbitmq;username=playground;password=letsplay' \
     -e 'ASPNETCORE_ENVIRONMENT=Development' \
     playground/service2
+
+docker run --rm \
+    --network playground \
+    appropriate/curl -i -X POST \
+        --url http://kong:8001/services/ \
+        --data 'name=service1' \
+        --data 'url=http://service1/api'
+
+docker run --rm \
+    --network playground \
+    appropriate/curl -i -X POST \
+        --url http://kong:8001/services/service1/routes \
+        --data 'paths[]=/service1'

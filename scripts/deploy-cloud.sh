@@ -1,10 +1,14 @@
 #! /bin/bash
 mydir=`dirname "$0"`
 
+# Create the swarm (okay to fail if already available)
+docker swarm init
+
 # Create Networks
 docker network create -d overlay --attachable admin
 
-# Create Volumes
+# (Re)Create Volumes
+docker network rm portainer_data kong_data konga_data
 docker volume create portainer_data
 docker volume create kong_data
 docker volume create konga_data

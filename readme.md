@@ -20,7 +20,7 @@ $ chmod +x ./scripts/deploy-cloud.sh && ./scripts/deploy-cloud.sh
 $ chmod +x ./scripts/deploy-playground.sh && ./scripts/deploy-playground.sh
 ```
 
-and then [verify the cloud environment](#verify_cloud) and [configure the application in the gateway](#verify_playground).
+and then [check the application results](#done).
 
 ---
 
@@ -176,7 +176,7 @@ $ docker service create \
     playground/haproxy
 ```
 
-### <a name="verify_cloud"></a> Verifying the cloud environment
+### Verifying the cloud environment
 In my case, I'm using _cloud.local_ pointing to _127.0.0.1_ on my hosts file. So, to have everything working properly on your end as well, let's add the following to the hosts file.
 
 ```
@@ -236,14 +236,14 @@ IMPORTANT: Remember that from this point onwards we should only use the _playgro
         playground/service2
     ```
 
-### <a name="verify_playground"></a> Testing the Pub/Sub application
+### Testing the Pub/Sub application
 Okay, applications deployed, and now what? How to test it?
 1. Go to _admin.cloud.local_, go to services and click _ADD NEW SERVICE_;
 2. Set the service name as _service1_, and fill the URL field with _http://service1/api_, then click the button _SUBMIT SERVICE_;
 3. Now, click services, go to _ROUTES_ and click _ADD ROUTE_;
 4. Just fill the field _Paths_ with _/service1_, hit enter (yes, you do need to press enter here), then click _SUBMIT ROUTE_;
 
-# Congratulations, You are done!
+# <a name="done"></a> Congratulations, You are done!
 Now if you go to _http://cloud.local/service1/values_ you should see the default output from the api exposed by service1.
 
 To check that the Pub/Sub works, go to _http://cloud.local/service1/values/15_ and run the following command:
