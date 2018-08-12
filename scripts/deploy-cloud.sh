@@ -8,13 +8,13 @@ docker swarm init
 docker network create -d overlay --attachable admin
 
 # (Re)Create Volumes
-docker network rm portainer_data kong_data konga_data
+docker volume rm portainer_data kong_data konga_data
 docker volume create portainer_data
 docker volume create kong_data
 docker volume create konga_data
 
 # Build HAProxy custom image
-docker build -f $mydir/../haproxy.dockerfile $mydir/../ -t mycloud.local/haproxy
+docker build -f $mydir/../haproxy.dockerfile $mydir/../ -t mycloud/haproxy:0.1.0
 
 # Deploy Databases
 docker service create \
@@ -45,7 +45,7 @@ docker service create \
     --constraint 'node.role == manager' \
     --mount 'type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock' \
     --mount 'type=volume,src=portainer_data,dst=/data' \
-    portainer/portainer -H unix:///var/run/docker.sock
+    portainer/portainer:1.19.1 -H unix:///var/run/docker.sock
 
 docker run --rm \
     --name kong-migrations \
@@ -76,6 +76,10 @@ docker service create \
     -e 'KONG_PROXY_LISTEN_SSL=0.0.0.0:8443' \
     kong:0.14.0
 
+docker run --rm \
+    --network admin \
+    pantsel/konga:0.12.0 -c prepare -a postgres -u konga:konga@konga-database/konga
+
 docker service create \
     --name konga \
     --network admin \
@@ -85,10 +89,11 @@ docker service create \
     -e 'DB_USER=konga' \
     -e 'DB_PASSWORD=konga' \
     -e 'DB_DATABASE=konga' \
-    pantsel/konga npm run prepare
+    -e 'TOKEN_SECRET=THIS_SHOULD_BE_A_RANDOM_TOKEN' \
+    pantsel/konga:0.12.0
 
 docker service create \
     --name haproxy \
     --network admin \
     --publish 80:80 \
-    mycloud.local/haproxy
+    mycloud/haproxy:0.1.0

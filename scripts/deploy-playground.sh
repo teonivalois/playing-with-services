@@ -6,8 +6,8 @@ docker network create -d overlay --attachable playground
 docker service update --network-add playground kong
 
 docker service rm service1 service2
-docker build -f $mydir/../service1.dockerfile $mydir/../ -t playground/service1
-docker build -f $mydir/../service2.dockerfile $mydir/../ -t playground/service2
+docker build -f $mydir/../service1.dockerfile $mydir/../ -t playground/service1:0.1.0
+docker build -f $mydir/../service2.dockerfile $mydir/../ -t playground/service2:0.1.0
 
 # Deploy services
 docker service create \
@@ -22,14 +22,14 @@ docker service create \
     --network playground \
     -e 'RabbitMQConnectionString=host=rabbitmq;username=playground;password=letsplay' \
     -e 'ASPNETCORE_ENVIRONMENT=Development' \
-    playground/service1
+    playground/service1:0.1.0
 
 docker service create \
     --name service2 \
     --network playground \
     -e 'RabbitMQConnectionString=host=rabbitmq;username=playground;password=letsplay' \
     -e 'ASPNETCORE_ENVIRONMENT=Development' \
-    playground/service2
+    playground/service2:0.1.0
 
 docker run --rm \
     --network playground \

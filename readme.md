@@ -46,14 +46,14 @@ $ docker service create \
     --constraint 'node.role == manager' \
     --mount 'type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock' \
     --mount 'type=volume,src=portainer_data,dst=/data' \
-    portainer/portainer -H unix:///var/run/docker.sock
+    portainer/portainer:1.19.1 -H unix:///var/run/docker.sock
 ```
 
 After you have created both the volume and the service, you can inspect the status of the service by running _docker service ls_. The output should be something like shown below:
 
 ```bash
 ID                  NAME                MODE                REPLICAS            IMAGE                        PORTS
-4ivc2kw4uoes        portainer           replicated          1/1                 portainer/portainer:latest
+4ivc2kw4uoes        portainer           replicated          1/1                 portainer/portainer:1.19.1
 ```
 
 Running _docker service ls_ is how we check the status of the services in our swarm.
@@ -94,7 +94,7 @@ The deployment for kong will happen in three steps:
         -e 'KONG_PG_USER=kong' \
         -e 'KONG_PG_PASSWORD=kong' \
         -e 'KONG_PG_DATABASE=kong' \
-        kong kong migrations up
+        kong:0.14.0 kong migrations up
     ```
 
     You will see several messages about migrations and in the end your terminal will be freed. This is a sign that we are okay to proceed.
@@ -121,7 +121,7 @@ The deployment for kong will happen in three steps:
         -e 'KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444' \
         -e 'KONG_PROXY_LISTEN=0.0.0.0:8000' \
         -e 'KONG_PROXY_LISTEN_SSL=0.0.0.0:8443' \
-        kong
+        kong:0.14.0
     ```
 
 Kong is done, but the community version doesn't come with a UI. So, let's grab an open-source solution for it. We will use [_konga_](https://pantsel.github.io/konga/).
@@ -145,7 +145,15 @@ Kong is done, but the community version doesn't come with a UI. So, let's grab a
 
 - Konga deployment
 
-    No secrets here either. It will take kare of seeding the database and being available.
+    Konga needs the database to be seeded/updated. To do this we need to run it as a temporary container attached to the _admin_ network, so it can reach the proper database.
+
+    ```
+    docker run --rm \
+    --network admin \
+    pantsel/konga:0.12.0 -c prepare -a postgres -u konga:konga@konga-database/konga -p 5432
+    ```
+
+    Once the seeding is done, it's time to deploy the service. Remember to change the _TOKEN_SECRET_ to a safe salt, as it will be used to generate the JWT token used on the authentication mechanism of Konga.
 
     ```bash
     $ docker service create \
@@ -157,7 +165,8 @@ Kong is done, but the community version doesn't come with a UI. So, let's grab a
         -e 'DB_USER=konga' \
         -e 'DB_PASSWORD=konga' \
         -e 'DB_DATABASE=konga' \
-        pantsel/konga npm run prepare
+        -e 'TOKEN_SECRET=THIS_SHOULD_BE_A_RANDOM_TOKEN' \
+        pantsel/konga:0.12.0 npm run prepare
     ```
 Finally, we are done with most of the admin services. When I _most_ is because we didn't expose any ports yet, which means we can't access _Kong_, _Konga_ nor _Portainer_ from our browser.
 To achieve that, I like to spin an [_haproxy_](https://haproxy.com) container with some basic configuration. The [_haproxy.cfg_](./config/haproxy.cfg) file contains all those three backends responding to:
@@ -168,12 +177,12 @@ To achieve that, I like to spin an [_haproxy_](https://haproxy.com) container wi
 Since this is a customized _haproxy_, we need to build the image and deploy it.
 
 ```bash
-$ docker build -f haproxy.dockerfile . -t playground/haproxy
+$ docker build -f haproxy.dockerfile . -t playground/haproxy:0.1.0
 $ docker service create \
     --name haproxy \
     --network admin \
     --publish 80:80 \
-    playground/haproxy
+    playground/haproxy:0.1.0
 ```
 
 ### Verifying the cloud environment
@@ -207,8 +216,8 @@ IMPORTANT: Remember that from this point onwards we should only use the _playgro
 - Let's build the images
 
     ```bash
-    $ docker build -f service1.dockerfile . -t playground/service1
-    $ docker build -f service2.dockerfile . -t playground/service2
+    $ docker build -f service1.dockerfile . -t playground/service1:0.1.0
+    $ docker build -f service2.dockerfile . -t playground/service2:0.1.0
     ```
 
 - And deploy RabbitMQ along with the services.
@@ -226,14 +235,14 @@ IMPORTANT: Remember that from this point onwards we should only use the _playgro
         --network playground \
         -e 'RabbitMQConnectionString=host=rabbitmq;username=playground;password=letsplay' \
         -e 'ASPNETCORE_ENVIRONMENT=Development' \
-        playground/service1
+        playground/service1:0.1.0
 
     $ docker service create \
         --name service2 \
         --network playground \
         -e 'RabbitMQConnectionString=host=rabbitmq;username=playground;password=letsplay' \
         -e 'ASPNETCORE_ENVIRONMENT=Development' \
-        playground/service2
+        playground/service2:0.1.0
     ```
 
 ### Testing the Pub/Sub application
